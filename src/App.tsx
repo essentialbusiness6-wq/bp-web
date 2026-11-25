@@ -19,7 +19,7 @@ import FeaturesPage from './features/features/FeaturesPage';
 import IntegrationsPage from './features/integrations/IntegrationsPage';
 import PricingPage from './features/pricing/PricingPage';
 import PrivacyPolicyPage from './features/legal/PrivacyPolicyPage';
-import TermsOfServicePage from './features/legal/TermsofServicePage';
+import TermsOfServicePage from './features/legal/TermsOfServicePage';
 import EntryPage from './features/onboarding/EntryPage';
 
 // Auth pages
