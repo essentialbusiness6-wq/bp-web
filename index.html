@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Business Essentials Prime is the leading online invoice generator and business management software." />
+    <meta name="keywords" content="invoice software, online invoice generator, Nigeria invoice software, client management system" />
+    <meta name="author" content="Business Essentials Prime" />
+    
+    <title>Business Essentials Prime | Online Invoice & Business Management Software</title>
+    <link rel="canonical" href="https://www.businessessentia.net" />
+    <link rel="icon" type="image/png" href="/static/media/app-logo.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- CRITICAL: Prevent flash of wrong theme -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('bep_theme') || 'system';
+          var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+          else document.documentElement.setAttribute('data-theme', 'light');
+        } catch(e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
