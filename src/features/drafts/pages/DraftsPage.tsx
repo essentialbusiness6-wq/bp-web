@@ -44,8 +44,13 @@ export default function DraftsPage() {
     setError(null);
     try {
       const params = sort === 'all' ? {} : { sort };
-      const data = await getDrafts(params);
-      setDrafts(data);
+      const response = await getDrafts(params);
+      
+      const draftList = Array.isArray(response) 
+        ? response 
+        : response.items || response.data || [];
+        
+      setDrafts(draftList);
     } catch (err: any) {
       setError(err.message || 'Failed to load drafts.');
     } finally {
