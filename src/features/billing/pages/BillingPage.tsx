@@ -29,14 +29,12 @@ export default function BillingPage() {
     setUpgrading(plan);
     try {
       const response = await createCheckoutSession(plan, billingCycle);
-      
-      // 🔍 DEBUG: Check exactly what the backend is returning
-      console.log("Checkout Session Response:", response);
-      
+            
       const checkoutUrl = 
         response.checkout_url || 
         response.url || 
         response.data?.authorization_url || 
+        reponse.authorization_url ||
         response.data?.checkout_url;
       
       if (checkoutUrl) {
