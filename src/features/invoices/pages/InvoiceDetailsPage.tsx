@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import html2pdf from 'html2pdf.js';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { getInvoiceDetails, shareInvoice } from '../services/invoiceService';
+import { getProfile } from '../../profile/services/profileService'; 
 import { Invoice } from '../../../types';
 
 export default function InvoiceDetailsPage() {
@@ -9,12 +11,15 @@ export default function InvoiceDetailsPage() {
   const navigate = useNavigate();
   
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null); // 3. State for user details
   const [loading, setLoading] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   useEffect(() => {
     if (invoiceId) {
       fetchInvoice();
+      fetchUserProfile(); // 4. Fetch user profile on mount
     }
   }, [invoiceId]);
 
@@ -24,9 +29,39 @@ export default function InvoiceDetailsPage() {
       setInvoice(data);
     } catch (error) {
       console.error('Failed to fetch invoice', error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const profile = await getProfile();
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Failed to fetch user profile', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 5. Proper PDF Generation Function
+  const handleDownloadPDF = () => {
+    if (!invoice) return;
+    setIsGeneratingPdf(true);
+    
+    const element = document.getElementById('invoice-to-print');
+    if (!element) return;
+
+    const opt = {
+      margin:       0.5,
+      filename:     `Invoice_${invoice.invoice_number}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().finally(() => {
+      setIsGeneratingPdf(false);
+    });
   };
 
   const handlePrint = () => {
@@ -37,13 +72,14 @@ export default function InvoiceDetailsPage() {
     if (!invoice) return;
     setIsSharing(true);
     try {
-      const response = await shareInvoice(invoice.id);
-      const shareUrl = `${window.location.origin}/pay/${invoice.id}`; // Or use response.share_link
+      await shareInvoice(invoice.id);
+      const shareUrl = `${window.location.origin}/pay/${invoice.id}`;
       
       if (navigator.share) {
         await navigator.share({
           title: `Invoice ${invoice.invoice_number}`,
-          text: `Please find attached invoice ${invoice.invoice_number} for ${formatCurrency(invoice.total, invoice.currency)}.`,
+          // Fixed: use total_amount instead of total
+          text: `Please find attached invoice ${invoice.invoice_number} for ${formatCurrency(invoice.total_amount, invoice.currency)}.`,
           url: shareUrl,
         });
       } else {
@@ -59,7 +95,7 @@ export default function InvoiceDetailsPage() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const formatCurrency = (amount: number | undefined, currency: string) => {
@@ -112,17 +148,24 @@ export default function InvoiceDetailsPage() {
           </button>
           <h1>Invoice Details</h1>
           <div className="header-actions">
-            <button className="icon-btn" onClick={handlePrint} aria-label="Print">
+            <button className="icon-btn" onClick={handlePrint} aria-label="Print" title="Print">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
               </svg>
             </button>
-            <button className="icon-btn" onClick={handlePrint} aria-label="Download PDF">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
+            
+            {/* 6. Updated Download Button */}
+            <button className="icon-btn" onClick={handleDownloadPDF} disabled={isGeneratingPdf} aria-label="Download PDF" title="Download PDF">
+              {isGeneratingPdf ? (
+                <span className="spinner-small" style={{ width: '16px', height: '16px' }}></span>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              )}
             </button>
-            <button className="icon-btn" onClick={handleShare} disabled={isSharing} aria-label="Share">
+
+            <button className="icon-btn" onClick={handleShare} disabled={isSharing} aria-label="Share" title="Share">
               {isSharing ? (
                 <span className="spinner-small" style={{ width: '16px', height: '16px' }}></span>
               ) : (
@@ -149,12 +192,8 @@ export default function InvoiceDetailsPage() {
                     <path d="M2 12L12 17L22 12"/>
                   </svg>
                 </div>
-                <div className="company-name">Business Essentials Prime</div>
-              </div>
-              <div className="company-address">
-                {invoice.company_address || 'Ibadan, Nigeria'}<br/>
-                {invoice.company_email || 'support@businessessentia.net'}<br/>
-                {invoice.company_phone || '+234 (802)-604-8215'}
+                {/* Platform Name stays here as the software provider */}
+                <div className="company-name">Powered by Business Essentials Prime</div>
               </div>
             </div>
             
@@ -178,13 +217,14 @@ export default function InvoiceDetailsPage() {
           </div>
           
           <div className="invoice-details-grid">
+            {/* 7. Updated BILLED FROM to use the actual User's Profile Data */}
             <div className="detail-section">
               <h3>BILLED FROM</h3>
               <div className="detail-content">
-                <strong>{invoice.company_name || 'Business Essentials Prime'}</strong><br/>
-                <span>{invoice.company_email}</span><br/>
-                <span>{invoice.company_phone}</span><br/>
-                <span>{invoice.company_address}</span>
+                <strong>{userProfile?.full_name || userProfile?.display_name || 'Your Business Name'}</strong><br/>
+                <span>{userProfile?.email || 'N/A'}</span><br/>
+                <span>{userProfile?.phone || 'N/A'}</span><br/>
+                <span>{userProfile?.address || 'N/A'}</span>
               </div>
             </div>
 
@@ -223,7 +263,7 @@ export default function InvoiceDetailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.items.map((item, idx) => (
+                {invoice.items?.map((item: any, idx: number) => (
                   <tr key={idx}>
                     <td>{item.description}</td>
                     <td className="text-right">{item.quantity}</td>
@@ -281,7 +321,7 @@ export default function InvoiceDetailsPage() {
           )}
 
           <div className="thank-you-banner">
-            Thank you for powering your business with Business Essentials Prime!
+            Thank you for your business!
           </div>
         </div>
       </div>
