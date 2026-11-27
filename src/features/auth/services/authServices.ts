@@ -2,9 +2,8 @@ import { apiClient } from '../../../services/api/client';
 import { User } from '../../../types';
 
 export interface LoginCredentials {
-  username: string; // Can be email or username
+  email: string; // Can be email or username
   password: string;
-  remember_me?: boolean;
 }
 
 export interface LoginResponse {
