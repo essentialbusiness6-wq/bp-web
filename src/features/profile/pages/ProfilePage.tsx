@@ -22,7 +22,7 @@ export default function ProfilePage() {
   });
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
-
+ 
   // Bank State
   const [bankData, setBankData] = useState<BankData | null>(null);
   const [isEditingBank, setIsEditingBank] = useState(false);
@@ -432,7 +432,9 @@ export default function ProfilePage() {
 
                   <div className="form-group">
                     <label>Account Number <span className="required">*</span></label>
-                    <div className="input-wrapper account-input-wrapper">
+                    
+                    {/* ✅ FIX: Use Flexbox instead of absolute positioning to prevent overlap */}
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <input 
                         type="text" 
                         value={bankForm.account_number}
@@ -444,18 +446,23 @@ export default function ProfilePage() {
                         maxLength={10}
                         inputMode="numeric"
                         required
+                        style={{ flex: 1 }} /* Takes up all available space */
                       />
                       <button 
                         type="button" 
                         className="btn secondary verify-btn" 
                         disabled={bankForm.account_number.length !== 10 || verifyingBank || !bankForm.bank_code}
                         onClick={handleVerifyBank}
+                        style={{ whiteSpace: 'nowrap', minWidth: '110px' }} /* Prevents button from shrinking */
                       >
-                        {verifyingBank ? 'Verifying...' : 'Verify'}
+                        {verifyingBank ? (
+                          <span className="spinner-small" style={{ width: '14px', height: '14px' }}></span>
+                        ) : (
+                          'Verify'
+                        )}
                       </button>
                     </div>
-                  </div>
-
+                    
                   {bankForm.account_name && (
                     <div className="account-name-display">
                       <div className="account-name-label">
