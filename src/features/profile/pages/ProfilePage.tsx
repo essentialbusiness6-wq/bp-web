@@ -6,6 +6,7 @@ import {
   getProfile, updateProfile, getBankDetails, updateBankDetails, resolveBankAccount, getBanks, deleteAccount 
 } from '../services/profileService';
 import { ProfileData, BankData, Bank } from '../../../types';
+import { uploadFile } from '../../../services/fileService';
 
 type Tab = 'profile' | 'bank';
 
@@ -101,14 +102,28 @@ export default function ProfilePage() {
     setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile(prev => ({ ...prev, profile_pic: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    
+    try {
+      // 1. Upload to backend/Cloudinary
+      const uploadResponse = await uploadFile(file, 'profiles');
+      
+      // 2. Update the profile state with the new Cloudinary URL
+      setProfile(prev => ({ 
+        ...prev, 
+        profile_pic: uploadResponse.url 
+      }));
+            
+    } catch (error: any) {
+      console.error('Failed to upload image', error);
+      alert(error.message || 'Failed to upload image. Please ensure it is under 5MB and is a JPG/PNG.');
+      
+      // Revert the file input if it failed
+      e.target.value = ''; 
+    } finally {
     }
   };
 
