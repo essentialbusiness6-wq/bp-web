@@ -34,7 +34,7 @@ export default function BillingPage() {
         response.checkout_url || 
         response.url || 
         response.data?.authorization_url || 
-        reponse.authorization_url ||
+        response.authorization_url ||
         response.data?.checkout_url;
       
       if (checkoutUrl) {
