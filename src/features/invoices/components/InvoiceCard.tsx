@@ -5,6 +5,7 @@ import { Invoice } from '../../../types';
 interface InvoiceCardProps {
   invoice: Invoice;
   onDelete: (id: string) => void;
+  onEdit?: (invoice: Invoice) => void; 
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -15,7 +16,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   draft: { label: 'Draft', color: 'var(--medium-gray)', bg: 'rgba(148, 163, 184, 0.1)' },
 };
 
-export default function InvoiceCard({ invoice, onDelete }: InvoiceCardProps) {
+export default function InvoiceCard({ invoice, onDelete, onEdit }: InvoiceCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const config = statusConfig[invoice.status] || statusConfig.unpaid;
 
@@ -30,12 +31,19 @@ export default function InvoiceCard({ invoice, onDelete }: InvoiceCardProps) {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+  const formatCurrency = (amount: number | undefined, currency: string) => {
+    const safeAmount = typeof amount === 'number' ? amount : 0;
+    const safeCurrency = currency || 'NGN';
+    
+    return new Intl.NumberFormat('en-NG', { 
+      style: 'currency', 
+      currency: safeCurrency 
+    }).format(safeAmount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   return (
@@ -52,7 +60,8 @@ export default function InvoiceCard({ invoice, onDelete }: InvoiceCardProps) {
       <div className="invoice-details">
         <div className="detail-item">
           <span className="detail-label">Amount</span>
-          <span className="detail-value">{formatCurrency(invoice.amount, invoice.currency)}</span>
+ 
+          <span className="detail-value">{formatCurrency(invoice.total_amount, invoice.currency)}</span>
         </div>
         <div className="detail-item">
           <span className="detail-label">Due Date</span>
@@ -68,6 +77,17 @@ export default function InvoiceCard({ invoice, onDelete }: InvoiceCardProps) {
           </svg>
           View
         </Link>
+        
+        {/* Optional: Add Edit button if you want to allow editing from the card */}
+        {onEdit && (
+          <button className="action-btn edit" onClick={() => onEdit(invoice)} aria-label="Edit invoice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        )}
+
         <button 
           className="action-btn delete" 
           onClick={handleDelete} 
