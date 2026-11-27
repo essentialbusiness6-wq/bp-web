@@ -107,7 +107,6 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/invoices" element={<InvoicesPage />} />
               <Route path="/dashboard/invoices/new" element={<CreateInvoicePage />} />
-              <Route path="/dashboard/invoices/:id" element={<PlaceholderPage title="Invoice Details" />} />
               <Route path="/dashboard/drafts" element={<DraftsPage />} />
               <Route path="/dashboard/clients" element={<ClientsPage />} />
               <Route path="/dashboard/payments" element={<PaymentsPage />} />
