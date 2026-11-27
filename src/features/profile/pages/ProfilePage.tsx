@@ -53,10 +53,6 @@ export default function ProfilePage() {
     try {
       const [profileRes, bankRes] = await Promise.all([getProfile(), getBankDetails()]);
       
-      // 🔍 DEBUG: See exactly what the backend returns
-      console.log("Profile Response:", profileRes);
-      console.log("Bank Response:", bankRes);
-
       setProfile({
         fullname: profileRes.full_name || '',
         profilename: profileRes.display_name || '',
@@ -71,7 +67,6 @@ export default function ProfilePage() {
       });
       
       const hasBank = bankRes && bankRes.account_number;
-      console.log("Has Bank Account?", hasBank);
       
       setBankData(hasBank ? bankRes : null);
       
@@ -93,9 +88,7 @@ export default function ProfilePage() {
     setBanksLoading(true);
     try {
       const data = await getBanks();
-      console.log("Raw Banks API Response:", data);
       
-      // ✅ SAFETY CHECK: Ensure we always set an array, even if backend wraps it in an object
       const bankList = Array.isArray(data) 
         ? data 
         : (data.banks || data.data || []);
@@ -334,7 +327,7 @@ export default function ProfilePage() {
 
         {/* ================= BANK DETAILS TAB ================= */}
         {activeTab === 'bank' && (
-          <div className="tab-content">
+          <div className="tab-content active">
             <div className="info-banner">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
