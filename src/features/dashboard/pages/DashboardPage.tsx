@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { getDashboardData } from '../services/dashboardService';
-import { generateClientInvoiceLink } from '../../invoices/services/invoiceService'; // <-- Added import
+import { generateClientInvoiceLink } from '../../invoices/services/invoiceService'; 
 import { DashboardData } from '../../../types';
 import OnboardingTour from '../../../components/ui/OnboardingTour';
 
@@ -76,9 +76,13 @@ export default function DashboardPage() {
     }
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
-  };
+  const formatCurrency = (amount, currencyCode = 'NGN') => {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: currencyCode, // Must be "NGN", "USD", etc.
+    minimumFractionDigits: 2
+  }).format(amount / 100); // Assuming amount is in kobo, divide by 100
+};
 
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
