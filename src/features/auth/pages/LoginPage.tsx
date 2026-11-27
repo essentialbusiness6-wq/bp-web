@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   
@@ -49,7 +49,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await loginUser({ username, password, remember_me: rememberMe });
+      const response = await loginUser({ email, password });
       if (response.requires_2fa) {
         setTempToken(response.temp_token || '');
         setView('2fa');
@@ -59,7 +59,7 @@ export default function LoginPage() {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Invalid username or password');
+      setError(err.message || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +150,7 @@ export default function LoginPage() {
             )}
             
             <div className="input-box">
-              <input className="joy" type="text" name="username" placeholder="Username or Email" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <input className="joy" type="text" name="username" placeholder="Username or Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <label className="happy">
                 <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </label>
