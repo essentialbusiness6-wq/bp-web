@@ -73,7 +73,7 @@ export default function RegisterPage() {
     }
     
     window.google.accounts.id.initialize({
-      client_id: '706651628151-cauj54pj60fo50sho897c99dh8l44rf8.apps.googleusercontent.com',
+      client_id: '706651628151-g84mt1cfhamp6etoji1ntt3i431nuck0.apps.googleusercontent.com',
       callback: async (response: any) => {
         setStatus('loading');
         setErrorMessage('');
