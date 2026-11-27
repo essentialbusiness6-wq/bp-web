@@ -52,10 +52,31 @@ export default function ProfilePage() {
   const fetchData = async () => {
     try {
       const [profileRes, bankRes] = await Promise.all([getProfile(), getBankDetails()]);
-      setProfile(profileRes);
-      setBankData(bankRes);
-      if (bankRes) {
-        setBankForm({ bank_code: bankRes.bank_code, account_number: bankRes.account_number, account_name: bankRes.account_name });
+      
+      // ✅ Map backend keys to frontend state keys so inputs pre-fill correctly
+      setProfile({
+        fullname: profileRes.full_name || '',
+        profilename: profileRes.display_name || '',
+        username: profileRes.email?.split('@')[0] || '', 
+        phone: profileRes.phone || '',
+        address: profileRes.address || '',
+        country: profileRes.country || 'NG',
+        alternateemail: profileRes.alternate_email || '',
+        website: profileRes.website || '',
+        bio: profileRes.bio || '',
+        profile_pic: profileRes.profile_image || ''
+      });
+      
+      // ✅ Fix bank data check: handle both null and empty objects
+      const hasBank = bankRes && bankRes.account_number;
+      setBankData(hasBank ? bankRes : null);
+      
+      if (hasBank) {
+        setBankForm({ 
+          bank_code: bankRes.bank_code || bankRes.bank_name, 
+          account_number: bankRes.account_number, 
+          account_name: bankRes.account_name 
+        });
       }
     } catch (error) {
       console.error('Failed to fetch profile data', error);
@@ -315,7 +336,7 @@ export default function ProfilePage() {
             </div>
 
             {/* 1. No Bank Data & Not Adding */}
-            {!bankData && !isAddingBank ? (
+            {(!bankData || !bankData.account_number) && !isAddingBank ? (
               <div className="bank-status-card empty">
                 <div className="bank-status-header">
                   <div className="bank-status-icon empty">
@@ -334,7 +355,8 @@ export default function ProfilePage() {
                   Add Bank Details
                 </button>
               </div>
-            ) : bankData && !isEditingBank ? (
+            ) : bankData && bankData.account_number && !isEditingBank ? (
+              // ... existing "Existing Bank Data Display" code ...
               /* 2. Existing Bank Data Display */
               <div className="bank-status-card">
                 <div className="bank-status-header">
