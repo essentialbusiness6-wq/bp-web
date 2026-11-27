@@ -25,19 +25,33 @@ export default function BillingPage() {
       setLoading(false);
     }
   };
-
   const handleUpgrade = async (plan: 'basic' | 'pro', amount: number) => {
     setUpgrading(plan);
     try {
       const response = await createCheckoutSession(plan, billingCycle);
-      // Redirect to Paystack/Stripe checkout page
-      window.location.href = response.checkout_url;
+      
+      // 🔍 DEBUG: Check exactly what the backend is returning
+      console.log("Checkout Session Response:", response);
+      
+      const checkoutUrl = 
+        response.checkout_url || 
+        response.url || 
+        response.data?.authorization_url || 
+        response.data?.checkout_url;
+      
+      if (checkoutUrl) {
+        // Redirect to the actual Paystack checkout page
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("No checkout URL was returned by the server.");
+      }
+      
     } catch (error: any) {
+      console.error("Checkout initialization failed:", error);
       alert(error.message || 'Failed to initialize checkout. Please try again.');
       setUpgrading(null);
     }
   };
-
   const CheckIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: 'var(--success)', flexShrink: 0 }}>
       <polyline points="20 6 9 17 4 12" />
