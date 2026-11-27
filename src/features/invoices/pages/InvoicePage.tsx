@@ -41,11 +41,10 @@ export default function InvoicesPage() {
     try {
       const response = await getInvoices({ status });
       
-      // 5. SAFETY CHECK: Prevents the ".map is not a function" error
-      // Whether the backend returns an array directly or { data: [...] } / { invoices: [...] }
+      // SAFETY CHECK: Handle array or paginated object { items: [...] }
       const invoiceList = Array.isArray(response) 
         ? response 
-        : response.invoices || response.data || [];
+        : response.items || response.invoices || response.data || [];
         
       setInvoices(invoiceList);
     } catch (err: any) {
