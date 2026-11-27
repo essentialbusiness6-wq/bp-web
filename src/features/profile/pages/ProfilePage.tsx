@@ -43,7 +43,6 @@ export default function ProfilePage() {
     fetchData();
   }, []);
 
-  // Fetch banks when bank tab is opened
   useEffect(() => {
     if (activeTab === 'bank' && banks.length === 0) {
       fetchBanks();
@@ -54,7 +53,10 @@ export default function ProfilePage() {
     try {
       const [profileRes, bankRes] = await Promise.all([getProfile(), getBankDetails()]);
       
-      // ✅ Map backend keys to frontend state keys so inputs pre-fill correctly
+      // 🔍 DEBUG: See exactly what the backend returns
+      console.log("Profile Response:", profileRes);
+      console.log("Bank Response:", bankRes);
+
       setProfile({
         fullname: profileRes.full_name || '',
         profilename: profileRes.display_name || '',
@@ -68,15 +70,16 @@ export default function ProfilePage() {
         profile_pic: profileRes.profile_image || ''
       });
       
-      // ✅ Fix bank data check: handle both null and empty objects
       const hasBank = bankRes && bankRes.account_number;
+      console.log("Has Bank Account?", hasBank);
+      
       setBankData(hasBank ? bankRes : null);
       
       if (hasBank) {
         setBankForm({ 
-          bank_code: bankRes.bank_code || bankRes.bank_name, 
-          account_number: bankRes.account_number, 
-          account_name: bankRes.account_name 
+          bank_code: bankRes.bank_code || bankRes.bank_name || '', 
+          account_number: bankRes.account_number || '', 
+          account_name: bankRes.account_name || '' 
         });
       }
     } catch (error) {
@@ -90,7 +93,14 @@ export default function ProfilePage() {
     setBanksLoading(true);
     try {
       const data = await getBanks();
-      setBanks(data);
+      console.log("Raw Banks API Response:", data);
+      
+      // ✅ SAFETY CHECK: Ensure we always set an array, even if backend wraps it in an object
+      const bankList = Array.isArray(data) 
+        ? data 
+        : (data.banks || data.data || []);
+        
+      setBanks(bankList);
     } catch (error) {
       console.error('Failed to fetch banks', error);
     } finally {
@@ -106,24 +116,13 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    
     try {
-      // 1. Upload to backend/Cloudinary
       const uploadResponse = await uploadFile(file, 'profiles');
-      
-      // 2. Update the profile state with the new Cloudinary URL
-      setProfile(prev => ({ 
-        ...prev, 
-        profile_pic: uploadResponse.url 
-      }));
-            
+      setProfile(prev => ({ ...prev, profile_pic: uploadResponse.url }));
     } catch (error: any) {
       console.error('Failed to upload image', error);
       alert(error.message || 'Failed to upload image. Please ensure it is under 5MB and is a JPG/PNG.');
-      
-      // Revert the file input if it failed
       e.target.value = ''; 
-    } finally {
     }
   };
 
@@ -162,7 +161,6 @@ export default function ProfilePage() {
     }
     setBankSaving(true);
     try {
-      // Backend will create the Paystack subaccount and return the saved data with subaccount_id
       const updated = await updateBankDetails({ 
         bank_code: bankForm.bank_code, 
         account_number: bankForm.account_number, 
@@ -241,7 +239,8 @@ export default function ProfilePage() {
         {/* ================= PROFILE TAB ================= */}
         {activeTab === 'profile' && (
           <div className="tab-content active">
-            <form onSubmit={handleProfileSubmit} className="profile-form">
+            {/* ... (Keep your existing Profile Tab JSX exactly as it was) ... */}
+             <form onSubmit={handleProfileSubmit} className="profile-form">
               <div className="profile-pic-section">
                 <div className="profile-pic-container">
                   <div className="profile-pic-wrapper">
@@ -267,7 +266,6 @@ export default function ProfilePage() {
                   <input type="file" id="newProfilePic" accept="image/*" hidden onChange={handleImageChange} />
                 </div>
               </div>
-
               <div className="form-section">
                 <h3>Personal Information</h3>
                 <div className="form-grid">
@@ -289,7 +287,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
               <div className="form-section">
                 <h3>Contact Details</h3>
                 <div className="form-grid">
@@ -317,7 +314,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
               <div className="form-section">
                 <h3>About You</h3>
                 <div className="form-group full-width">
@@ -326,7 +322,6 @@ export default function ProfilePage() {
                   <p className="field-hint">Max 500 characters. This appears on your public profile.</p>
                 </div>
               </div>
-
               <div className="form-actions">
                 <button type="button" className="btn secondary" onClick={() => fetchData()}>Cancel</button>
                 <button type="submit" className="btn primary" disabled={profileSaving}>
@@ -350,8 +345,9 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* 1. No Bank Data & Not Adding */}
+            {/* ✅ BULLETPROOF CONDITIONAL RENDERING */}
             {(!bankData || !bankData.account_number) && !isAddingBank ? (
+              // 1. No Bank Data & Not Adding
               <div className="bank-status-card empty">
                 <div className="bank-status-header">
                   <div className="bank-status-icon empty">
@@ -366,13 +362,20 @@ export default function ProfilePage() {
                     <p>Add your bank details to start receiving payments securely.</p>
                   </div>
                 </div>
-                <button type="button" className="btn primary" onClick={() => setIsAddingBank(true)} style={{ width: '100%', marginTop: '16px' }}>
+                <button 
+                  type="button" 
+                  className="btn primary" 
+                  onClick={() => {
+                    console.log("Add Bank Details button clicked!");
+                    setIsAddingBank(true);
+                  }} 
+                  style={{ width: '100%', marginTop: '16px' }}
+                >
                   Add Bank Details
                 </button>
               </div>
             ) : bankData && bankData.account_number && !isEditingBank ? (
-              // ... existing "Existing Bank Data Display" code ...
-              /* 2. Existing Bank Data Display */
+              // 2. Existing Bank Data Display
               <div className="bank-status-card">
                 <div className="bank-status-header">
                   <div className="bank-status-icon verified">
@@ -391,7 +394,9 @@ export default function ProfilePage() {
                 <div className="bank-details-display">
                   <div className="bank-detail-item">
                     <span className="bank-detail-label">Bank Name</span>
-                    <span className="bank-detail-value">{banks.find(b => b.code === bankData.bank_code)?.name || bankData.bank_name}</span>
+                    <span className="bank-detail-value">
+                      {Array.isArray(banks) ? (banks.find(b => b.code === bankData.bank_code)?.name || bankData.bank_name) : bankData.bank_name}
+                    </span>
                   </div>
                   <div className="bank-detail-item">
                     <span className="bank-detail-label">Account Number</span>
@@ -410,7 +415,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              /* 3. Form (for adding or editing) */
+              // 3. Form (for adding or editing)
               <form onSubmit={handleBankSubmit} className="bank-form">
                 <div className="form-section">
                   <h3>Bank Information</h3>
@@ -425,7 +430,8 @@ export default function ProfilePage() {
                       <option value="" disabled>
                         {banksLoading ? 'Loading banks...' : 'Select your bank'}
                       </option>
-                      {banks.map(bank => (
+                      {/* ✅ SAFETY CHECK: Only map if it's definitely an array */}
+                      {Array.isArray(banks) && banks.map(bank => (
                         <option key={bank.code} value={bank.code}>{bank.name}</option>
                       ))}
                     </select>
@@ -475,7 +481,7 @@ export default function ProfilePage() {
                     setIsEditingBank(false); 
                     setIsAddingBank(false); 
                     if (bankData) {
-                      setBankForm({ bank_code: bankData.bank_code, account_number: bankData.account_number, account_name: bankData.account_name });
+                      setBankForm({ bank_code: bankData.bank_code || '', account_number: bankData.account_number || '', account_name: bankData.account_name || '' });
                     } else {
                       setBankForm({ bank_code: '', account_number: '', account_name: '' });
                     }
