@@ -62,8 +62,10 @@ export default function InvoiceDetailsPage() {
     return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+  const formatCurrency = (amount: number | undefined, currency: string) => {
+    const safeAmount = typeof amount === 'number' ? amount : 0;
+    const safeCurrency = currency || 'NGN';
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: safeCurrency }).format(safeAmount);
   };
 
   const getStatusColor = (status: string) => {
@@ -245,7 +247,7 @@ export default function InvoiceDetailsPage() {
               )}
               <div className="total-row grand-total">
                 <span className="label">TOTAL</span>
-                <span className="value">{formatCurrency(invoice.total, invoice.currency)}</span>
+                <span className="value">{formatCurrency(invoice.total_amount, invoice.currency)}</span>
               </div>
               {invoice.amount_paid > 0 && (
                 <div className="total-row">
