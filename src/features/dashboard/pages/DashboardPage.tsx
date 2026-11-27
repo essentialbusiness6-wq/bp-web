@@ -167,7 +167,7 @@ export default function DashboardPage() {
           </button>
         </div>
         <div className="balance-amount">
-          {hideBalance ? '••••••' : formatCurrency(data.balance, data.currency_symbol)}
+          {hideBalance ? '••••••' : formatCurrency(data.balance, data.currency || 'NGN')}
         </div>
         <div className="balance-footer">
           <Link to="/dashboard/transactions" className="transactions-link">Transactions History →</Link>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
         </div>
         <div className="stat-card revenue">
           <div className="stat-label">Revenue</div>
-          <div className="stat-value">{formatCurrency(data.total_revenue, data.currency_symbol)}</div>
+          <div className="stat-value">{formatCurrency(data.total_revenue, data.currency || 'NGN')}</div>
         </div>
       </div>
 
@@ -226,7 +226,7 @@ export default function DashboardPage() {
             <div className="analytics-stat-card">
               <div className="analytics-stat-label">Avg Invoice Value</div>
               <div className="analytics-stat-value">
-                {formatCurrency(data.company_data.total_invoices > 0 ? data.company_data.total_revenue / data.company_data.total_invoices : 0, data.currency_symbol)}
+                {formatCurrency(data.company_data.total_invoices > 0 ? data.company_data.total_revenue / data.company_data.total_invoices : 0, data.currency || 'NGN')}
               </div>
               <div className="analytics-stat-trend">per invoice</div>
             </div>
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                   <div className="activity-title">{activity.title}</div>
                   <div className="activity-time">{activity.created_at}</div>
                 </div>
-                <div className="activity-amount">{formatCurrency(activity.amount, data.currency_symbol)}</div>
+                <div className="activity-amount">{formatCurrency(activity.amount, data.currency || 'NGN')}</div>
               </div>
             ))
           )}
