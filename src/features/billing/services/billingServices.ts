@@ -18,3 +18,7 @@ export const createCheckoutSession = async (
 export const cancelSubscription = async (): Promise<{ message: string }> => {
   return apiClient('/api/v1/billing/cancel', { method: 'POST' });
 };
+
+export const verifyBillingPayment = async (reference: string) => {
+  return apiClient('/api/v1/billing/verify?reference=${reference}', {method: 'GET'});
+};
