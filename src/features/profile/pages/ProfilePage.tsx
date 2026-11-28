@@ -232,7 +232,6 @@ export default function ProfilePage() {
         {/* ================= PROFILE TAB ================= */}
         {activeTab === 'profile' && (
           <div className="tab-content active">
-            {/* ... (Keep your existing Profile Tab JSX exactly as it was) ... */}
              <form onSubmit={handleProfileSubmit} className="profile-form">
               <div className="profile-pic-section">
                 <div className="profile-pic-container">
@@ -338,9 +337,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* ✅ BULLETPROOF CONDITIONAL RENDERING */}
             {(!bankData || !bankData.account_number) && !isAddingBank ? (
-              // 1. No Bank Data & Not Adding
               <div className="bank-status-card empty">
                 <div className="bank-status-header">
                   <div className="bank-status-icon empty">
@@ -368,7 +365,6 @@ export default function ProfilePage() {
                 </button>
               </div>
             ) : bankData && bankData.account_number && !isEditingBank ? (
-              // 2. Existing Bank Data Display
               <div className="bank-status-card">
                 <div className="bank-status-header">
                   <div className="bank-status-icon verified">
@@ -408,7 +404,6 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              // 3. Form (for adding or editing)
               <form onSubmit={handleBankSubmit} className="bank-form">
                 <div className="form-section">
                   <h3>Bank Information</h3>
@@ -423,7 +418,6 @@ export default function ProfilePage() {
                       <option value="" disabled>
                         {banksLoading ? 'Loading banks...' : 'Select your bank'}
                       </option>
-                      {/* ✅ SAFETY CHECK: Only map if it's definitely an array */}
                       {Array.isArray(banks) && banks.map(bank => (
                         <option key={bank.code} value={bank.code}>{bank.name}</option>
                       ))}
@@ -433,7 +427,6 @@ export default function ProfilePage() {
                   <div className="form-group">
                     <label>Account Number <span className="required">*</span></label>
                     
-                    {/* ✅ FIX: Use Flexbox instead of absolute positioning to prevent overlap */}
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <input 
                         type="text" 
@@ -446,14 +439,14 @@ export default function ProfilePage() {
                         maxLength={10}
                         inputMode="numeric"
                         required
-                        style={{ flex: 1 }} /* Takes up all available space */
+                        style={{ flex: 1 }}
                       />
                       <button 
                         type="button" 
                         className="btn secondary verify-btn" 
                         disabled={bankForm.account_number.length !== 10 || verifyingBank || !bankForm.bank_code}
                         onClick={handleVerifyBank}
-                        style={{ whiteSpace: 'nowrap', minWidth: '110px' }} /* Prevents button from shrinking */
+                        style={{ whiteSpace: 'nowrap', minWidth: '110px' }}
                       >
                         {verifyingBank ? (
                           <span className="spinner-small" style={{ width: '14px', height: '14px' }}></span>
@@ -463,18 +456,19 @@ export default function ProfilePage() {
                       </button>
                     </div>
                     
-                  {bankForm.account_name && (
-                    <div className="account-name-display">
-                      <div className="account-name-label">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                        <span>Verified Account Name</span>
+                    {bankForm.account_name && (
+                      <div className="account-name-display">
+                        <div className="account-name-label">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                          </svg>
+                          <span>Verified Account Name</span>
+                        </div>
+                        <div className="account-name-value">{bankForm.account_name}</div>
                       </div>
-                      <div className="account-name-value">{bankForm.account_name}</div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </div> {/* ✅ FIX: Added missing closing tag for form-section */}
 
                 <div className="form-actions">
                   <button type="button" className="btn secondary" onClick={() => { 
