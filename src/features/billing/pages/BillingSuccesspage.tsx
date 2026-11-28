@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { useAuth } from '../../../hooks/useAuth';
+import { verifyBillingPayment } from '../services/billingServices'; 
 
 export default function BillingSuccessPage() {
   const navigate = useNavigate();
@@ -11,19 +12,27 @@ export default function BillingSuccessPage() {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      const reference = searchParams.get('reference');
-      const trxref = searchParams.get('trxref');
+      const reference = searchParams.get('reference') || searchParams.get('trxref');
       
       // Paystack redirects with these. If missing, it might be a direct navigation or failed tx.
-      if (!reference && !trxref) {
+      if (!reference) {
         setStatus('error');
         return;
       }
 
       try {
-        // IMPORTANT: We do NOT verify the payment here. 
-        // The backend webhook has already processed the Paystack event and updated the database.
-        // We simply refresh the user context to get the new 'pro' or 'basic' plan from the backend.
+        // 1. FALLBACK VERIFICATION: 
+        // Webhooks can be delayed. We call the backend verify endpoint just in case 
+        // the webhook hasn't processed yet. It's idempotent, so it's safe to call even if already processed.
+        try {
+          await verifyBillingPayment(reference);
+        } catch (verifyErr) {
+          console.warn("Backend verify failed (might already be processed by webhook):", verifyErr);
+        }
+
+        // 2. REFRESH USER CONTEXT:
+        // Now that we know the backend has processed it (either via webhook or our fallback),
+        // we fetch the latest user data to get the new 'pro' or 'basic' plan.
         await refreshUser();
         
         setStatus('success');
@@ -33,7 +42,7 @@ export default function BillingSuccessPage() {
           navigate('/dashboard');
         }, 3000);
       } catch (error) {
-        console.error('Failed to refresh user session after payment:', error);
+        console.error('Failed to process payment success:', error);
         setStatus('error');
       }
     };
