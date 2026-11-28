@@ -265,15 +265,17 @@ export default function SharePage() {
           <h3 className="stats-title">Your Referral Stats</h3>
           <div className="stats-grid">
             <div className="stat-item">
-              <div className="stat-number">{data.invites_sent}</div>
+              <div className="stat-number">{data.invites_sent || data.total_referrals || 0}</div>
               <div className="stat-label">Invites Sent</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">{data.signups}</div>
+              <div className="stat-number">{data.signups || data.total_referrals || 0}</div>
               <div className="stat-label">Sign Ups</div>
             </div>
             <div className="stat-item">
-              <div className="stat-number">{data.currency}{data.earned.toLocaleString()}</div>
+              <div className="stat-number">
+                {data.currency || '₦'}{(data.earned || data.paid_rewards_kobo || 0).toLocaleString()}
+              </div>
               <div className="stat-label">Earned</div>
             </div>
           </div>
