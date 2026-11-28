@@ -31,7 +31,7 @@ export default function DashboardPage() {
         
         const isAccountIncomplete = typeof response.account === 'boolean' 
           ? !response.account 
-          : !(response.account?.bank_name && response.account?.account_number);
+          : !response.account?.account_number;
           
         const dismissed = localStorage.getItem('setupBannerDismissedAt');
         const hoursSince = dismissed ? (Date.now() - parseInt(dismissed)) / (1000 * 60 * 60) : Infinity;
