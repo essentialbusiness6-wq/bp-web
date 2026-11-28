@@ -10,13 +10,47 @@ export const generatePDFBlob = async (invoice: Invoice, profile: any): Promise<B
   return await pdf(<InvoicePDFDocument invoice={invoice} profile={profile} />).toBlob();
 };
 
+// export const generatePNGBlob = async (containerRef: React.RefObject<HTMLDivElement | null>): Promise<Blob | null> => {
+//   if (!containerRef.current) return null;
+//   // High scale for crisp text
+//   return await toPng(containerRef.current, { 
+//     cacheBust: true, 
+//     pixelRatio: 3, 
+//     backgroundColor: '#ffffff' 
+//   }).then(dataUrl => {
+//     const byteString = atob(dataUrl.split(',')[1]);
+//     const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+//     const ab = new ArrayBuffer(byteString.length);
+//     const ia = new Uint8Array(ab);
+//     for (let i = 0; i < byteString.length; i++) {
+//       ia[i] = byteString.charCodeAt(i);
+//     }
+//     return new Blob([ab], { type: mimeString });
+//   });
+
+
 export const generatePNGBlob = async (containerRef: React.RefObject<HTMLDivElement | null>): Promise<Blob | null> => {
   if (!containerRef.current) return null;
-  // High scale for crisp text
+  
   return await toPng(containerRef.current, { 
     cacheBust: true, 
     pixelRatio: 3, 
-    backgroundColor: '#ffffff' 
+    backgroundColor: '#ffffff',
+    
+    // ✅ FIX: Skip external stylesheets (like Google Fonts) to avoid CORS errors
+    filter: (node) => {
+      // Skip <link> tags that load external stylesheets
+      if (node.tagName === 'LINK' && node.rel === 'stylesheet') {
+        return false;
+      }
+      return true;
+    },
+    
+    // ✅ FIX: Don't try to inline external fonts
+    fontEmbedCSS: '',
+    
+    // ✅ FIX: Skip images that might cause CORS issues
+    imagePlaceholder: undefined,
   }).then(dataUrl => {
     const byteString = atob(dataUrl.split(',')[1]);
     const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
@@ -28,6 +62,8 @@ export const generatePNGBlob = async (containerRef: React.RefObject<HTMLDivEleme
     return new Blob([ab], { type: mimeString });
   });
 };
+
+
 
 export const handleExport = async (
   format: ExportFormat, 
