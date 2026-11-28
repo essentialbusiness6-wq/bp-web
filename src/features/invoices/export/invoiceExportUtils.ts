@@ -38,4 +38,4 @@ export const shareFiles = async (files: File[], title: string, text: string) => 
     return true;
   }
   return false;
-};i
+};
