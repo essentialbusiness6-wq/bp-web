@@ -58,7 +58,7 @@ export default function RequestInvoicePage() {
     const verify = async () => {
       try {
         const data = await verifyShareToken(token);
-        if (!data.is_valid) {
+        if (!data.valid) {
           setError('This invitation link has expired or is invalid.');
         } else {
           setContext(data);
@@ -180,7 +180,7 @@ export default function RequestInvoicePage() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
-                <span>Requested by: <strong>{context.creator_name}</strong></span>
+                <span>Requested by: <strong>{context.business_name}</strong></span>
               </div>
               <div className="info-row">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -212,7 +212,7 @@ export default function RequestInvoicePage() {
         <header className="page-header">
           <div className="header-content">
             <h1>Invoice Request</h1>
-            <p>Fill in your details to request an invoice from <strong>{context.creator_name}</strong></p>
+            <p>Fill in your details to request an invoice from <strong>{context.business_name}</strong></p>
           </div>
           <div className="header-badge">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
