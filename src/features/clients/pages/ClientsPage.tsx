@@ -136,7 +136,7 @@ export default function ClientsPage() {
               <div className="client-email">{client.email}</div>
               <div className="client-invoices">{client.total_invoices}</div>
               <div className={`client-outstanding ${client.outstanding_balance > 0 ? 'text-danger' : 'text-success'}`}>
-                {formatCurrency(client.outstanding_balance, client.currency)}
+                {formatCurrency(client.outstanding_amount, client.currency)}
               </div>
               <div className="client-status">
                 <span className={`status-badge ${client.status}`}>{client.status}</span>
