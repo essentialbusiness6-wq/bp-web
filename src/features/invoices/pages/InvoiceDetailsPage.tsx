@@ -1,69 +1,64 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import html2pdf from 'html2pdf.js';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { getInvoiceDetails, shareInvoice } from '../services/invoiceService';
 import { getProfile } from '../../profile/services/profileService'; 
 import { Invoice } from '../../../types';
+import InvoiceExportDialog from '../components/InvoiceExportDialog';
+import InvoiceImageDocument from '../export/InvoiceImageDocument';
+import { handleExport, ExportFormat } from '../export/invoiceExportService';
 
 export default function InvoiceDetailsPage() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   
   const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null); // 3. State for user details
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  
+  // Export State
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [exportStatus, setExportStatus] = useState('');
+  const [exportError, setExportError] = useState<string | null>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (invoiceId) {
-      fetchInvoice();
-      fetchUserProfile(); // 4. Fetch user profile on mount
+      Promise.all([getInvoiceDetails(invoiceId!), getProfile()])
+        .then(([invData, profData]) => {
+          setInvoice(invData);
+          setUserProfile(profData);
+        })
+        .catch(err => console.error('Failed to fetch data', err))
+        .finally(() => setLoading(false));
     }
   }, [invoiceId]);
 
-  const fetchInvoice = async () => {
-    try {
-      const data = await getInvoiceDetails(invoiceId!);
-      setInvoice(data);
-    } catch (error) {
-      console.error('Failed to fetch invoice', error);
-    }
+  // --- Export Handlers ---
+  const handleDownloadClick = () => {
+    setExportError(null);
+    setExportStatus('');
+    setIsExportDialogOpen(true);
   };
 
-  const fetchUserProfile = async () => {
-    try {
-      const profile = await getProfile();
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Failed to fetch user profile', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 5. Proper PDF Generation Function
-  const handleDownloadPDF = () => {
-    if (!invoice) return;
-    setIsGeneratingPdf(true);
+  const handleExportRequest = async (format: ExportFormat) => {
+    if (!invoice || !userProfile) return;
+    setIsGenerating(true);
+    setExportError(null);
     
-    const element = document.getElementById('invoice-to-print');
-    if (!element) return;
-
-    const opt = {
-      margin:       0.5,
-      filename:     `Invoice_${invoice.invoice_number}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().finally(() => {
-      setIsGeneratingPdf(false);
-    });
+    try {
+      await handleExport(format, invoice, userProfile, imageContainerRef, setExportStatus);
+      setTimeout(() => setIsExportDialogOpen(false), 1500);
+    } catch (err: any) {
+      setExportError(err.message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
+  // --- Utility Functions ---
   const handlePrint = () => {
     window.print();
   };
@@ -78,7 +73,6 @@ export default function InvoiceDetailsPage() {
       if (navigator.share) {
         await navigator.share({
           title: `Invoice ${invoice.invoice_number}`,
-          // Fixed: use total_amount instead of total
           text: `Please find attached invoice ${invoice.invoice_number} for ${formatCurrency(invoice.total_amount, invoice.currency)}.`,
           url: shareUrl,
         });
@@ -154,15 +148,11 @@ export default function InvoiceDetailsPage() {
               </svg>
             </button>
             
-            {/* 6. Updated Download Button */}
-            <button className="icon-btn" onClick={handleDownloadPDF} disabled={isGeneratingPdf} aria-label="Download PDF" title="Download PDF">
-              {isGeneratingPdf ? (
-                <span className="spinner-small" style={{ width: '16px', height: '16px' }}></span>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-              )}
+            {/* Export Button - Opens the format selection dialog */}
+            <button className="icon-btn" onClick={handleDownloadClick} aria-label="Export Invoice" title="Export Invoice">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
             </button>
 
             <button className="icon-btn" onClick={handleShare} disabled={isSharing} aria-label="Share" title="Share">
@@ -178,7 +168,7 @@ export default function InvoiceDetailsPage() {
           </div>
         </div>
 
-        {/* Invoice Document */}
+        {/* ==================== VISIBLE INVOICE DOCUMENT ==================== */}
         <div className="invoice-document" id="invoice-to-print">
           <div className="watermark">INVOICE</div>
           
@@ -192,7 +182,6 @@ export default function InvoiceDetailsPage() {
                     <path d="M2 12L12 17L22 12"/>
                   </svg>
                 </div>
-                {/* Platform Name stays here as the software provider */}
                 <div className="company-name">Powered by Business Essentials Prime</div>
               </div>
             </div>
@@ -217,7 +206,6 @@ export default function InvoiceDetailsPage() {
           </div>
           
           <div className="invoice-details-grid">
-            {/* 7. Updated BILLED FROM to use the actual User's Profile Data */}
             <div className="detail-section">
               <h3>BILLED FROM</h3>
               <div className="detail-content">
@@ -324,6 +312,24 @@ export default function InvoiceDetailsPage() {
             Thank you for your business!
           </div>
         </div>
+
+        {/* ==================== HIDDEN CONTAINER FOR PNG GENERATION ==================== */}
+        {/* This renders a dedicated, high-resolution invoice layout off-screen for html-to-image to capture */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none', width: '800px' }}>
+          {invoice && userProfile && (
+            <InvoiceImageDocument ref={imageContainerRef} invoice={invoice} profile={userProfile} />
+          )}
+        </div>
+
+        {/* ==================== EXPORT FORMAT DIALOG ==================== */}
+        <InvoiceExportDialog 
+          isOpen={isExportDialogOpen}
+          onClose={() => setIsExportDialogOpen(false)}
+          onExport={handleExportRequest}
+          isGenerating={isGenerating}
+          statusMessage={exportStatus}
+          error={exportError}
+        />
       </div>
     </DashboardLayout>
   );
