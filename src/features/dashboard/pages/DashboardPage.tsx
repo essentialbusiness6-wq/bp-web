@@ -76,13 +76,22 @@ export default function DashboardPage() {
     }
   };
 
-  const formatCurrency = (amount, currencyCode = 'NGN') => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: currencyCode, // Must be "NGN", "USD", etc.
-    minimumFractionDigits: 2
-  }).format(amount / 100); // Assuming amount is in kobo, divide by 100
-};
+//   const formatCurrency = (amount, currencyCode = 'NGN') => {
+//   return new Intl.NumberFormat('en-NG', {
+//     style: 'currency',
+//     currency: currencyCode, // Must be "NGN", "USD", etc.
+//     minimumFractionDigits: 2
+//   }).format(amount / 100); // Assuming amount is in kobo, divide by 100
+// };
+  const formatCurrency = (amount: number | undefined, currency: string) => {
+    const safeAmount = typeof amount === 'number' ? amount : 0;
+    const safeCurrency = currency || 'NGN';
+    
+    return new Intl.NumberFormat('en-NG', { 
+      style: 'currency', 
+      currency: safeCurrency 
+    }).format(safeAmount);
+  };
 
   const getTimeOfDay = () => {
     const hour = new Date().getHours();
